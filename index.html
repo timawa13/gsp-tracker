@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Universe | Gio San Pedro</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07070F;--surface:#0D0D1C;--card:#101020;
+  --border:#181828;--border-hi:#252545;
+  --tp:#E2E2F4;--ts:#7070B0;--tm:#30304A;
+  --f:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --mono:ui-monospace,'SF Mono','Fira Code',monospace;
+  --r:8px;--tr:0.15s ease;
+}
+body{background:var(--bg);color:var(--tp);font-family:var(--f);font-size:14px;line-height:1.5;min-height:100vh}
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 18px 12px;position:sticky;top:0;z-index:200}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.hdr-t{font-size:18px;font-weight:800;color:#EEEEFF;letter-spacing:-0.03em}
+.hdr-s{font-size:11px;color:var(--tm);margin-top:2px}
+.hdr-r{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.stats{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.stat{text-align:center}
+.sn{font-size:16px;font-weight:700;line-height:1}
+.sl{font-size:9px;color:var(--tm);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.vtog{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:2px}
+.vb{padding:5px 14px;font-size:11px;font-weight:600;font-family:var(--f);border:none;background:transparent;color:var(--tm);cursor:pointer;letter-spacing:0.05em;transition:all var(--tr)}
+.vb.on{background:#1A1A2E;color:var(--tp)}
+.si{font-size:10px;color:var(--tm);margin-top:4px;transition:color 0.3s;text-align:right}
+.si.saving{color:#F59E0B}.si.saved{color:#22C55E}
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;background:#09091A;border-bottom:1px solid var(--border);padding:0 8px;gap:2px}
+.tvb{padding:9px 12px;font-size:10px;font-weight:600;font-family:var(--f);border:none;border-bottom:2px solid transparent;background:transparent;color:#2E2E5A;cursor:pointer;letter-spacing:0.07em;text-transform:uppercase;transition:all var(--tr);white-space:nowrap}
+.tvb:hover{color:#6060A0}
+.tvb.on{color:#9090D0;border-bottom-color:#5050A0}
+.tab-add-series{padding:10px 13px;font-size:10px;font-weight:600;font-family:var(--f);border:none;border-bottom:2px solid transparent;background:transparent;color:#2E2E5A;cursor:pointer;white-space:nowrap;letter-spacing:0.07em;text-transform:uppercase;transition:all var(--tr)}
+.tab-add-series:hover{color:#6060A0}
+.card{cursor:grab;transition:border-color var(--tr),box-shadow var(--tr)}
+.card.ep-dragging{opacity:0.35;cursor:grabbing}
+.card.ep-drag-over{box-shadow:0 -3px 0 #5050B0}
+.tab.drag-over{border-bottom-color:#5050A0!important;color:#9090D0!important}
+.tab{cursor:grab}
+.tsep{flex:1}
+/* TABS */
+.tbar{display:flex;align-items:stretch;border-bottom:1px solid var(--border);background:#09091A;overflow-x:auto;scrollbar-width:none}
+.tbar::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:5px;padding:10px 13px;background:transparent;border:none;border-bottom:2px solid transparent;color:#2E2E5A;font-size:10px;font-weight:600;font-family:var(--f);cursor:pointer;white-space:nowrap;letter-spacing:0.07em;text-transform:uppercase;transition:all var(--tr);--sc:#64748B}
+.tab:hover{color:#6060A0}
+.tab.on{color:var(--sc);border-bottom-color:var(--sc)}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--sc);opacity:0.3;transition:opacity var(--tr)}
+.tab.on .tdot{opacity:1}
+.tcnt{background:#12121E;color:#2A2A50;padding:1px 5px;border-radius:6px;font-size:9px;font-weight:700;transition:all var(--tr)}
+.tab.on .tcnt{background:color-mix(in srgb,var(--sc) 20%,transparent);color:var(--sc)}
+.tadd{display:flex;align-items:center;padding:0 14px;cursor:pointer;color:#2E2E5A;font-size:20px;border:none;background:transparent;font-family:var(--f);transition:color var(--tr);border-bottom:2px solid transparent}
+.tadd:hover{color:#6060A0}
+/* SERIES LABEL */
+.slbl{display:flex;align-items:center;justify-content:space-between;padding:13px 18px 5px}
+.slbl-l{display:flex;align-items:center;gap:8px}
+.sbar{width:3px;height:16px;border-radius:2px;flex-shrink:0}
+.sname{font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase}
+.sacts{display:flex;gap:6px}
+.sact{background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--tm);font-size:10px;padding:3px 9px;cursor:pointer;font-family:var(--f);transition:all var(--tr)}
+.sact:hover{border-color:var(--border-hi);color:var(--ts)}
+.sact.del:hover{border-color:#F4436650;color:#F44366}
+/* EPISODE LIST */
+.elist{padding:4px 12px 12px}
+.addbtn{display:flex;align-items:center;gap:6px;margin:2px 12px 40px;padding:10px 14px;background:transparent;border:1px dashed var(--border-hi);border-radius:var(--r);color:var(--tm);font-size:12px;cursor:pointer;font-family:var(--f);transition:all var(--tr);width:calc(100% - 24px)}
+.addbtn:hover{border-color:var(--sc);color:var(--sc)}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--sc);border-radius:var(--r);padding:12px 14px;margin-bottom:7px;--sc:#64748B;transition:border-color var(--tr)}
+.card:hover{border-color:var(--border-hi);border-left-color:var(--sc)}
+.ctop{display:flex;align-items:flex-start;gap:9px}
+.ebadge{font-family:var(--mono);font-size:9px;font-weight:800;color:var(--sc);background:color-mix(in srgb,var(--sc) 15%,transparent);padding:3px 6px;border-radius:4px;letter-spacing:0.05em;flex-shrink:0;margin-top:1px;white-space:nowrap}
+.ebadge.none{color:var(--tm);background:transparent}
+.cbody{flex:1;min-width:0}
+.ctitle{font-size:13px;font-weight:700;color:#DDDDF8;line-height:1.3;margin-bottom:5px}
+.coverview{font-size:12px;color:#7070B8;line-height:1.65;margin-bottom:7px}
+.cmeta{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:5px}
+.mpartner{font-size:10px;color:#6060B0;background:#10102A;padding:2px 7px;border-radius:4px}
+.mwindow{font-size:10px;color:#4A4A88}
+.mwindow.tbd{color:var(--tm)}
+.cnotes{font-size:11px;color:#36366A;line-height:1.5;margin-top:3px;font-style:italic}
+.shared-tag{font-size:9px;font-weight:700;color:#4CAF50;background:#4CAF5018;border:1px solid #4CAF5040;padding:2px 6px;border-radius:4px;margin-left:7px;letter-spacing:0.05em;vertical-align:middle}
+.cfooter{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:8px}
+.spill{font-size:9px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;letter-spacing:0.04em;border:1px solid;transition:all var(--tr);font-family:var(--f);white-space:nowrap}
+.cacts{display:flex;gap:6px}
+.cact{background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--tm);font-size:10px;padding:3px 9px;cursor:pointer;font-family:var(--f);transition:all var(--tr)}
+.cact:hover{border-color:var(--border-hi);color:var(--ts)}
+.cact.del:hover{border-color:#F4436650;color:#F44366}
+/* CALENDAR */
+.calhdr{padding:13px 18px 6px;font-size:11px;font-weight:700;color:var(--tm);letter-spacing:0.1em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.calhdr-bar{width:3px;height:16px;border-radius:2px;background:linear-gradient(to bottom,#F5A623,#E879A0)}
+.calgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 12px 16px}
+.mcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;min-height:80px}
+.mhdr{padding:7px 10px;font-size:11px;font-weight:700;color:var(--ts);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.mcnt{font-size:9px;color:var(--tm);font-family:var(--mono)}
+.meps{padding:7px 8px;display:flex;flex-direction:column;gap:4px}
+.echip{display:flex;align-items:flex-start;gap:5px;padding:4px 6px;border-radius:4px;background:#0A0A1A;border-left:2px solid;cursor:pointer;transition:background var(--tr)}
+.echip:hover{background:#141428}
+.chipl{font-size:8px;font-weight:800;letter-spacing:0.04em;flex-shrink:0;margin-top:1px;font-family:var(--mono)}
+.chipb{flex:1;min-width:0}
+.chipt{font-size:10px;color:var(--ts);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chipp{font-size:9px;color:var(--tm);margin-top:1px}
+.mempty{font-size:10px;color:var(--tm);padding:10px 8px}
+.tbdsec{padding:0 12px 40px}
+.tbdhdr{font-size:11px;font-weight:700;color:var(--tm);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px}
+.tbdchips{display:flex;flex-wrap:wrap;gap:6px}
+.tbdchip{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;background:#0A0A1A;border:1px solid var(--border);cursor:pointer;transition:border-color var(--tr)}
+.tbdchip:hover{border-color:var(--border-hi)}
+.tbddot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.tbdt{font-size:10px;color:var(--tm)}
+/* MODAL */
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.moverlay.hide{display:none}
+.mcard{background:var(--surface);border:1px solid var(--border-hi);border-radius:10px;width:100%;max-width:500px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.mhd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.mtitle{font-size:13px;font-weight:700;color:var(--tp)}
+.mclose{background:transparent;border:none;color:var(--tm);font-size:18px;cursor:pointer;padding:0 4px;font-family:var(--f);line-height:1;transition:color var(--tr)}
+.mclose:hover{color:var(--tp)}
+.mbody{padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:11px}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.flbl{font-size:10px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:0.1em}
+.finp,.fsel,.fta{background:var(--bg);border:1px solid var(--border-hi);border-radius:6px;color:var(--tp);font-size:12px;font-family:var(--f);padding:8px 10px;outline:none;transition:border-color var(--tr);width:100%}
+.finp:focus,.fsel:focus,.fta:focus{border-color:#5050A0}
+.fta{resize:vertical;min-height:76px;line-height:1.55}
+.fsel{cursor:pointer}
+option{background:#0D0D1C}
+.mftr{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--border)}
+.btn{padding:7px 18px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--f);cursor:pointer;border:1px solid;transition:all var(--tr)}
+.btn-c{background:transparent;border-color:var(--border-hi);color:var(--tm)}
+.btn-c:hover{color:var(--tp)}
+.btn-p{background:#3A3A90;border-color:#5050B0;color:#D0D0FF}
+.btn-p:hover{background:#4A4AA0}
+.btn-d{background:transparent;border-color:#F4436640;color:#F44366}
+.btn-d:hover{background:#F4436618}
+/* SWATCHES */
+.swatches{display:flex;gap:7px;flex-wrap:wrap;padding:4px 0}
+.sw{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all var(--tr)}
+.sw.on{border-color:white;transform:scale(1.15)}
+/* RESP */
+@media(max-width:600px){
+  .calgrid{grid-template-columns:repeat(2,1fr)}
+  .hdr{padding:12px 14px 10px}
+  .elist{padding:4px 8px 12px}
+  .addbtn{margin:2px 8px 40px;width:calc(100% - 16px)}
+  .tbdsec{padding:0 8px 40px}
+  .calgrid{padding:0 8px 16px}
+  .fg-row{grid-template-columns:1fr}
+}
+.viewer-banner{background:#0C0C1A;border-bottom:1px solid var(--border);padding:8px 18px;font-size:11px;color:#4A4A80;letter-spacing:0.04em}
+body.viewer .cact,
+body.viewer .addbtn,
+body.viewer .tab-add-series,
+body.viewer .sacts,
+body.viewer .si{display:none!important}
+body.viewer .spill{cursor:default;pointer-events:none}
+body.viewer .card{cursor:default!important;pointer-events:none}
+body.viewer .tab,.tab-bar{pointer-events:all!important}
+body.viewer .tvb{pointer-events:all!important}
+</style>
+</head>
+<body>
+
+<div class="viewer-banner" id="vbanner" style="display:none">
+  &#128065; View only &mdash; updates live as Gio makes changes
+</div>
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-t" style="color:#F5C400">Geordani Content Dashboard</div>
+      <div class="hdr-s" style="font-size:11px;font-weight:300;color:#4A4A80;letter-spacing:0.05em;margin-top:3px">by Gio San Pedro</div>
+      <div class="stats" id="stats"></div>
+      <div class="hdr-s" id="sub">Loading...</div>
+    </div>
+    <div class="hdr-r">
+      <div class="si" id="si">Auto-save on</div>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <button class="tvb on" id="vbList" onclick="setView('list')">☰ List</button>
+  <button class="tvb" id="vbCal" onclick="setView('calendar')">▦ Calendar</button>
+</div>
+
+<div id="listWrap">
+  <div class="tbar" id="tbar"></div>
+  <div class="slbl" id="slbl"></div>
+  <div class="elist" id="elist"></div>
+  <button class="addbtn" id="addbtn" onclick="openAddEp()">＋ Add Episode</button>
+</div>
+
+<div id="calWrap" style="display:none">
+  <div class="calhdr"><div class="calhdr-bar"></div>Production Calendar — Jul 2026 to Jul 2027</div>
+  <div class="calgrid" id="calgrid"></div>
+  <div class="tbdsec">
+    <div class="tbdhdr">TBD / Unscheduled</div>
+    <div class="tbdchips" id="tbdchips"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="moverlay hide" id="modal" onclick="overlayClick(event)">
+  <div class="mcard" onclick="event.stopPropagation()">
+    <div class="mhd">
+      <span class="mtitle" id="mtitle">Edit Episode</span>
+      <button class="mclose" onclick="closeModal()">✕</button>
+    </div>
+    <div class="mbody" id="mbody"></div>
+    <div class="mftr" id="mftr"></div>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE ────────────────────────────────────────────────────────────────
+const FB_CFG = {
+  apiKey: "AIzaSyCqRhrFU_ttgO_awp3JA9Mt-XucjI87ARk",
+  authDomain: "project-geordani.firebaseapp.com",
+  databaseURL: "https://project-geordani-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "project-geordani",
+  storageBucket: "project-geordani.firebasestorage.app",
+  messagingSenderId: "662546988464",
+  appId: "1:662546988464:web:f9e76da1974e9d03d52a75"
+};
+let DBREF = null;
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function initFirebase() {
+  const base = 'https://www.gstatic.com/firebasejs/10.8.1/';
+  await loadScript(base + 'firebase-app-compat.js');
+  await loadScript(base + 'firebase-database-compat.js');
+  if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+  DBREF = firebase.database().ref('geordani/tracker');
+}
+
+// ── MODE ─────────────────────────────────────────────────────────────────────
+const IS_VIEWER = new URLSearchParams(window.location.search).has('view');
+
+const SC = {"bpt": {"label": "Building Papa's Tesla", "color": "#F5A623", "short": "BPT"}, "solar": {"label": "Going Solar", "color": "#4CAF50", "short": "SOLAR"}, "mabutech": {"label": "Mabutech", "color": "#00BCD4", "short": "MABUTECH"}, "drivethrough": {"label": "Drivethrough", "color": "#E879A0", "short": "DRIVETHROUGH"}, "fme": {"label": "Finding Mama's EV", "color": "#C084FC", "short": "FME"}, "ideas": {"label": "Unseriesed Ideas", "color": "#64748B", "short": "IDEAS"}};
+const ST = ["Conceptualized", "Pitched", "Confirmed", "In Production", "Published"];
+const STC = {"Conceptualized": "#64748B", "Pitched": "#F59E0B", "Confirmed": "#3B82F6", "In Production": "#A855F7", "Published": "#22C55E"};
+const INIT = {"bpt": [{"id": "bpt-01", "ep": "01", "title": "Delivery Day", "partner": "—", "window": "Jul 2026", "status": "Conceptualized", "logline": "Geordani arrives, and suddenly everything that was planned, paid for, and dreamed about becomes real. This is the first moment Papa's name means something in metal and glass. The series starts here.", "notes": "Sacred — no sponsor. The inciting moment of the whole series."}, {"id": "bpt-03", "ep": "02", "title": "The Spigen Kit", "partner": "Spigen", "window": "Jul 2026", "status": "Conceptualized", "logline": "Spigen built a whole ecosystem for the Tesla Model Y L, and Geordani gets the full treatment. From screen protectors to interior organizers, this episode covers every piece of the Spigen lineup designed to protect and enhance the car. The build officially begins.", "notes": ""}, {"id": "bpt-02", "ep": "03", "title": "Learning How to Tesla", "partner": "—", "window": "Aug 2026", "status": "Conceptualized", "logline": "A Tesla doesn't drive like anything you've driven before, and that's the point. Gio learns one-pedal driving, the touchscreen life, and the full rewiring of muscle memory that comes with switching from ICE to EV; alongside the unglamorous but very Filipino practicalities: RFID registration, Autosweep and Easytrip setup, and getting the village sticker on the windshield. He's not just learning for himself; he's learning so he can teach Papa credibly when he comes home.", "notes": "One-pedal driving, touchscreen life, muscle memory adjustment. RFID (Autosweep/Easytrip) and village sticker segment grounds the episode in PH reality."}, {"id": "bpt-04", "ep": "04", "title": "Cleaning, Tinting & Shielding", "partner": "XPEL", "window": "Aug 2026", "status": "Conceptualized", "logline": "Tesla's factory paint is notoriously thin, which means protecting it isn't optional, it's urgent. XPEL's PPF, ceramic coating, and window tint give Geordani a layer of defense before the roads of Metro Manila get to her. This is what keeping her pristine actually looks like.", "notes": "PPF, ceramic coating, window tint."}, {"id": "bpt-05", "ep": "05", "title": "The Enhance Auto Kit", "partner": "Enhance Auto", "window": "Sep 2026", "status": "Conceptualized", "logline": "Enhance Auto's Smart and S3XY lineup transforms the Model Y L's interior from clean to considered. This episode covers the hands-on install of Enhance Auto's accessories: every detail that makes the cabin feel more intentional. The interior glow-up, documented in full.", "notes": "Smart & S3XY product lines."}, {"id": "bpt-06", "ep": "06", "title": "Home Charger Installation", "partner": "IP Design", "window": "Sep 2026", "status": "Conceptualized", "logline": "Every Tesla needs a home, and for Geordani, that means a Level 2 charger designed and installed by IP Design. This episode covers the process of turning the garage into a proper charging setup, from planning through execution. The first night she sleeps fully charged.", "notes": "Level 2 install. Personal — about Gio's home, not just the car."}, {"id": "bpt-07", "ep": "07", "title": "The Jowua Kit", "partner": "Jowua", "window": "Oct 2026", "status": "Conceptualized", "logline": "Jowua's accessories are the final interior layer of the build: organizers, mounts, and everyday-use items that complete the cabin experience. This episode covers the full Jowua lineup installed and tested in real use. Every detail that makes Geordani feel finished.", "notes": ""}, {"id": "bpt-08", "ep": "08", "title": "The Owners Community", "partner": "TOP", "window": "Oct 2026", "status": "Conceptualized", "logline": "Tesla ownership in the Philippines isn't a solo experience; there's a whole community waiting. This episode brings Geordani into the Tesla Owners Philippines (TOP) world: meetups, shared knowledge, and the unspoken kinship of people who made the same choice. Turns out this was never just a family story.", "notes": "Found family angle — extends the series family theme outward."}, {"id": "bpt-09", "ep": "09", "title": "Going Solar", "partner": "GoSolar TBC", "window": "Nov 2026", "status": "Conceptualized", "logline": "The build doesn't stop at the car; the house starts to evolve around her. This episode marks the beginning of the home solar journey: the decision, the provider, and what it means to power an EV from the sun. It's also the launch of the Going Solar series, which tells the full story.", "notes": "Bridge episode — root of BPT and launch of the Going Solar series."}, {"id": "bpt-10", "ep": "10", "title": "Geordani's Shoes", "partner": "Aura Forged", "window": "Dec 2026", "status": "Conceptualized", "logline": "Wheels are the single biggest visual transformation you can make to a car, and Aura Forged's forged wheels are exactly that. This episode documents the decision, the fitment, and the before-and-after that stops people mid-scroll. She looked great before. She looks like herself now.", "notes": "Biggest visual impact in the build arc. Sits post-solar, pre-road trips."}, {"id": "bpt-11", "ep": "11", "title": "The Baguio Test", "partner": "Continental", "window": "Jan 2027", "status": "Conceptualized", "logline": "Geordani's first real road test: cold air, mountain roads, and a question that needs a real answer — is she ready? This episode takes the car up to Baguio on Continental tires and finds out what the build is actually made of. The road trip arc begins here.", "notes": ""}, {"id": "bpt-12", "ep": "12", "title": "The Infanta Test", "partner": "Continental", "window": "Feb 2027", "status": "Conceptualized", "logline": "Chasing the coast, Geordani runs the Infanta route for the most scenic (and unpredictable) road test yet. Winding mountain passes, coastal roads, and terrain that no test track can simulate. The second chapter of the road trip arc.", "notes": ""}, {"id": "bpt-13", "ep": "13", "title": "The Bicol Test", "partner": "Continental", "window": "Mar 2027", "status": "Conceptualized", "logline": "Manila to Naga to Legazpi: the big one. Geordani takes on the full Bicol run, with Mayon Volcano as the emotional destination and the climax of the entire road trip arc. This is the last major adventure before Papa comes home.", "notes": "Three-act arc. Mayon reveal moment. Emotionally the peak before Papa arrives."}, {"id": "bpt-14", "ep": "14", "title": "Papa's Homecoming", "partner": "—", "window": "Apr 2027", "status": "Conceptualized", "logline": "The episode the whole series was building toward. Papa comes home, and Geordani is there waiting. No sponsor. No product placement. Just the moment.", "notes": "Sacred — no sponsor."}, {"id": "bpt-15", "ep": "15", "title": "Upkeep: The Real Cost", "partner": "Oona TBC", "window": "May 2027", "status": "Conceptualized", "logline": "A year of ownership, documented honestly: insurance, charging, maintenance, and the numbers nobody talks about upfront. Sponsored by Oona, whose product is exactly the answer to the episode's most pressing question. This is what it actually costs to own a Tesla in the Philippines.", "notes": "Insurance as natural sponsor — the sponsor IS the content."}, {"id": "bpt-16", "ep": "16", "title": "One Year Later", "partner": "Samsung / WD TBC", "window": "Jun 2027", "status": "Conceptualized", "logline": "Twelve months in, Geordani is no longer new, and that's exactly the point. This episode pulls footage from the SSD that's been running Sentry Mode since Day 1 to look back at the full journey: the build, the road trips, the family. Sponsored by an SSD brand, because memory is exactly what this episode is made of.", "notes": "One year from Delivery Day."}], "solar": [{"id": "solar-02", "ep": "02", "title": "Batteries", "partner": "GoSolar TBC", "window": "Dec 2026", "status": "Conceptualized", "logline": "The solar system is only as smart as its storage, and this episode is all about the batteries. From how they work to why they matter for an EV household, this is the technical and practical heart of the Going Solar series. The brain of the whole setup.", "notes": ""}, {"id": "solar-03", "ep": "03", "title": "Blackout Simulation", "partner": "GoSolar TBC", "window": "Jan 2027", "status": "Conceptualized", "logline": "The real test: what happens when the grid goes down? This episode pulls the plug on purpose to see exactly what the solar and battery system can (and can't) sustain. The climax of the Going Solar arc, and the moment the whole investment either proves itself or doesn't.", "notes": "The stress test. Climax of the solar arc."}, {"id": "solar-04", "ep": "04", "title": "The Long Game", "partner": "GoSolar TBC", "window": "Jun 2027", "status": "Conceptualized", "logline": "Six months after installation, it's time for an honest check-in on real-world performance, maintenance experience, and one critical question: did GoSolar stick around after the deal was done? The epilogue to the solar story, and the receipts that matter most.", "notes": "Maintenance check ~6 months post-install."}, {"id": "solar-05", "ep": "05", "title": "Expansion", "partner": "GoSolar TBC", "window": "TBD", "status": "Conceptualized", "logline": "The solar system that powers Geordani was designed for one EV, but a second car is joining the household, and the garage, the panels, and the battery storage all need to grow to match. This episode covers the full renovation: structural changes, expanded solar capacity, and upgraded battery storage. The house doesn't just charge one car anymore. It's ready for whatever comes next.", "notes": "Contingent on FME partnership confirming. References the incoming second EV without naming the series or brand."}], "mabutech": [{"id": "mabu-01", "ep": "—", "title": "Is PH FSD-Ready?", "partner": "Dashcam brand TBC", "window": "TBD", "status": "Conceptualized", "logline": "Tesla's Full Self-Driving is available, but Philippine roads are a different problem. This episode audits FSD against the real conditions of Metro Manila and the highways beyond it, using actual dashcam footage as evidence. The software says it can. The roads say otherwise.", "notes": "Hard editorial line. Sponsor IS the content — dashcam footage as primary evidence."}, {"id": "mabu-02", "ep": "—", "title": "State of EV in the Philippines", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "Electric vehicles are arriving faster than the systems meant to support them. This episode looks at PH EV adoption numbers, whether the national grid can handle a dominant-EV future, and the regulatory gap behind RC9: a requirement that exists on paper but has zero training infrastructure behind it. The cars are here. Everything else isn't.", "notes": "Three legs: adoption, grid readiness, RC9 gap."}, {"id": "mabu-03", "ep": "—", "title": "AI: Ethical Use and Real Impact", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "Pope Leo XIV's Magnifica Humanitas (May 2026) set the ethical standard: AI must serve human dignity, not replace it. This episode tests that standard against Philippine reality: traffic management systems, governance apps, and a digital labor economy where Filipino workers bear the hidden cost of AI's grunt work. The Pope weighed in. Now let's see if the Philippines is anywhere close.", "notes": "Opens with Magnifica Humanitas as ethical framework."}, {"id": "mabu-04", "ep": "—", "title": "HUCs: How PH Cities Use Tech to Govern", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "Four highly urbanized cities (Pasig, Iloilo, Naga, and CDO) that didn't wait for the national government to figure out digital governance. This episode examines how each city is using technology to serve its residents, with a tangent into the cautionary tale of national-level websites and apps that launched with fanfare and quietly died. The CTC closer: meaningful change in the Philippines has always happened bottom-up, city by city.", "notes": "Naga declared PH's 34th HUC on May 26, 2026. CTC = Call to Consideration."}, {"id": "mabu-05", "ep": "—", "title": "Free TV is Dying — And So Is Something Else", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "Free television was the great Filipino equalizer: the medium that reached everyone, from BGC condos to barangay sitios, regardless of income or internet access. As it shrinks, this episode examines what's being lost across three dimensions: reach, journalistic performance, and institutional integrity. When the signal goes dark, something democracy-shaped goes with it.", "notes": "Three angles: reach, journalistic performance, institutional integrity."}], "drivethrough": [{"id": "drive-16", "ep": "01", "title": "NLEX–Skyway–SLEX: Southbound", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "From NLEX down to SLEX via the Skyway: the first half of the Metro Manila expressway loop, shot when the roads finally breathe. The city spreads out below in near-silence, Geordani gliding through elevated expressways with almost no one else on them. Part one of two.", "notes": "Shoot window: Holy Week, wee hours, or a quiet Sunday."}, {"id": "drive-17", "ep": "02", "title": "NLEX–Skyway–SLEX: Northbound", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "The return leg: SLEX back up to NLEX via the Skyway, same elevated road in the opposite direction at the same ungodly hour. Different skyline angle, different lighting, different feeling entirely. Part two of two, and the loop is complete.", "notes": "Same shoot night as Ep 01."}, {"id": "drive-05", "ep": "03", "title": "C1: The Innermost Ring", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "C1 is the oldest ring road in Metro Manila: the innermost circle running through Intramuros, Tondo, and Binondo, where the city began. Tight streets, colonial walls, the Pasig River close by; even at its quietest it carries centuries of weight. This is Manila before Manila became the Metro.", "notes": "Shoot window: wee hours or Sunday."}, {"id": "drive-06", "ep": "04", "title": "Roxas Boulevard", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Roxas Boulevard runs the entire length of Manila Bay, from Baclaran north past the Cultural Center complex, the US Embassy, and the Manila Hotel, all of it open to the water. At wee hours the lamp posts, the wide lanes, and the bay on one side make it one of the most cinematic stretches of road in the country. This is Manila at its most dignified.", "notes": "Shoot window: wee hours."}, {"id": "drive-07", "ep": "05", "title": "C2: The Working City's Ring", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "C2 cuts through the dense inner districts (Espana, Legarda, Blumentritt, the edges of Divisoria), the working-class ring road that keeps the old city moving. By day it's relentless; by night the markets are shuttered and the road finally belongs to itself. A different Manila from the one the postcards show.", "notes": "Shoot window: wee hours."}, {"id": "drive-08", "ep": "06", "title": "Ayala / Makati CBD", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Ayala Avenue is the spine of the Makati CBD: the corporate canyon lined with glass towers, wide lanes, and the Ayala Triangle at its center. At 2AM it's an eerie, immaculate ghost town of wealth with almost no one in it. The most powerful square kilometer in Philippine finance, completely silent.", "notes": "Shoot window: wee hours."}, {"id": "drive-09", "ep": "07", "title": "C3: The Quiet Middle Ring", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "C3 passes through the inner QC districts: Araneta Center, Cubao, the old commercial core of Quezon City before BGC and Eastwood redefined the east. It's the ring road most Metro Manila residents have driven through without noticing it as C3. At night it's a study in transition: between the dense inner city and the sprawling suburbs beyond.", "notes": "Shoot window: wee hours or Sunday."}, {"id": "drive-10", "ep": "08", "title": "BGC: The Grid", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Bonifacio Global City's perfectly planned grid of wide, clean streets is the sharpest contrast to old Metro Manila that exists within the same city limits. At night the art installations, high-rise lights, and near-empty lanes make it look like a city imported wholesale from somewhere else. The most deliberately designed district in the Metro, shot without a single person in it.", "notes": "Shoot window: wee hours."}, {"id": "drive-11", "ep": "09", "title": "C4 / EDSA: Both Ways", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Most Metro Manila commuters have driven EDSA (officially C4) their entire lives without ever really seeing it. Shot when the city finally exhales, this episode covers the full stretch from Monumento to MOA and back: overpasses, empty bus stops, the flyovers and underpasses of the country's most infamous road stripped of every last commuter. Both directions, one episode: EDSA finally seen on its own terms.", "notes": "Shoot window: Holy Week, wee hours, or a quiet Sunday."}, {"id": "drive-12", "ep": "10", "title": "Taft Avenue", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Taft Avenue is one of Manila's oldest major roads, running from Pasay through Malate and Ermita, past DLSU, PNU, and the edges of the cultural district, all the way to the old city. Named after William Howard Taft, it carries a quiet institutional dignity that the daytime commuter chaos completely obscures. At night it's a different avenue entirely.", "notes": "Shoot window: wee hours."}, {"id": "drive-13", "ep": "11", "title": "C5: The Benchmark", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "C5 is the road that defined post-EDSA Metro Manila's expansion: long, wide, and fast, connecting Taguig to QC through Pasig and the new business districts that grew up along its length. It's the benchmark Metro Manila expressway experience: the road every other road in this series is implicitly compared to. At its best, at night, it's what the Metro aspires to be.", "notes": "The anchor episode of the Metro Manila arc."}, {"id": "drive-14", "ep": "12", "title": "Commonwealth Avenue, QC", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "Commonwealth Avenue is one of the longest and widest roads in the Philippines: up to 18 lanes at its peak, running from Quezon City Hall all the way to Fairview in the north. By day it's a traffic nightmare; by night it becomes something hypnotic: an almost infinite straight line through the sprawling northern Metro. The scale of it only makes sense when there's nobody else on it.", "notes": "Shoot window: wee hours or Sunday."}, {"id": "drive-15", "ep": "13", "title": "C6: The Edge of the Metro", "partner": "DJI TBC", "window": "TBD", "status": "Conceptualized", "logline": "C6 is Metro Manila's outermost ring road, running through the eastern fringe where Pasig, Taguig, and Muntinlupa meet, where the Metro gives way to something that hasn't quite decided what it is yet. The least-known of the C roads, the least developed, and the most honest about where the city ends. This is where the ring closes, and where Manila runs out of road.", "notes": "The series finale of the C-road arc."}, {"id": "drive-01", "ep": "14", "title": "Uwian Na: Baguio to Manila", "partner": "DJI TBC", "window": "Jan 2027", "status": "Conceptualized", "logline": "No narration. No cuts. Just Geordani, the Baguio descent, and hours of road captured by an Osmo 360. The mountain gives way to the lowlands kilometer by kilometer: Kennon, Marcos Highway, or Naguilian, depending on conditions. The kind of content you put on a second screen and leave running.", "notes": "Companion to BPT Ep 11."}, {"id": "drive-02", "ep": "15", "title": "Uwian Na: Infanta to Manila", "partner": "DJI TBC", "window": "Feb 2027", "status": "Conceptualized", "logline": "The coastal road back from Infanta, uninterrupted; Quezon Province giving way to Rizal, mountain and sea trading places the whole way. No commentary, no cuts, just the Osmo 360 rolling and Geordani doing what she was built to do. Pure vibe, full runtime.", "notes": "Companion to BPT Ep 12."}, {"id": "drive-03", "ep": "16", "title": "Uwian Na: Legazpi to Naga", "partner": "DJI TBC", "window": "Mar 2027", "status": "Conceptualized", "logline": "The first leg of the Bicol return: Mayon still visible in the rearview, the road unwinding northward through Albay toward Camarines Sur. Shot entirely on the Osmo 360 with zero narration, this is the emotional exhale after the series' climax. The volcano behind you. Home still hours ahead.", "notes": "Companion to BPT Ep 13."}, {"id": "drive-04", "ep": "17", "title": "Uwian Na: Naga to Manila", "partner": "DJI TBC", "window": "Mar 2027", "status": "Conceptualized", "logline": "The long haul back: Naga through the Quezon corridor, past Lucena, up through STAR Tollway and SLEX, the skyline eventually reappearing on the horizon. The Osmo 360 runs the whole way, no commentary needed. By the time you see the Skyway, you feel what the trip meant without anyone having to say it.", "notes": "Companion to BPT Ep 13. The longest leg."}], "fme": [{"id": "fme-01", "ep": "01", "title": "The Search", "partner": "EV Brand TBC", "window": "TBD", "status": "Conceptualized", "logline": "Papa is part of the mission; Mama has no idea. Together, Gio and Papa evaluate what the ideal EV needs to do for her specific situation: spatial challenges, low-speed confidence, parking sensors, 360 cameras, every safety net modern EVs can offer. The episode ends with finding the car, meeting it in person, and putting it through its paces. The audience knows what Mama doesn't: this one's for her.", "notes": "Contingent on EV brand partnership. Papa's first active on-camera role — co-conspirator this time, not the destination."}, {"id": "fme-02", "ep": "02", "title": "The Build", "partner": "EV Brand TBC + Accessory Partners TBC", "window": "TBD", "status": "Conceptualized", "logline": "With the car chosen and the secret still intact, it's time to kit her out: PPF, tinting, ceramic coat, interior accessories, everything that makes the car truly ready for Mama. Everything BPT spread across multiple episodes gets compressed into one tight, purposeful build. The clock is ticking, the garage is about to change, and Mama still doesn't know.", "notes": "GS 05 (garage expansion) sits between FME 02 and FME 03."}, {"id": "fme-03", "ep": "03", "title": "The Surprise", "partner": "EV Brand TBC", "window": "TBD", "status": "Conceptualized", "logline": "A normal day, an unsuspecting Mama, and a secret the audience has been keeping with Gio and Papa for three episodes, until now. The reveal, the reaction, Papa watching her face, and then Gio teaching Mama how to drive her EV the same way he taught Papa in Papa's Homecoming. Two series, two parents, one son. Full circle.", "notes": "The parallel with BPT's Papa's Homecoming is intentional and earned."}], "ideas": [{"id": "sa-01", "ep": "—", "title": "Shopee vs. The Flex", "partner": "Shopee", "window": "TBD", "status": "Conceptualized", "logline": "Every accessory in Geordani's build came from a premium brand: Spigen, Jowua, Enhance Auto. This episode hunts for Shopee alternatives for everything that's removable and replaceable, and puts them through an honest verdict: Sulit, Pwede Na, or Huwag Na. For the Tesla owner who wants the setup without the full price tag.", "notes": "Lives adjacent to BPT — aware of it, not inside it."}, {"id": "sa-02", "ep": "—", "title": "5 Facts About Tesla in PH", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "From a Meralco chairman who couldn't register his electric car in 2013 to over 2,000 units on Philippine roads by 2026: the Tesla story in the Philippines is wilder than most people know. This episode compresses twelve years of grey market hustle, regulatory absurdity, and eventual official arrival into five essential facts. Short-form, searchable, and genuinely surprising.", "notes": "MVP's Model S as anchor fact. EVIDA 2022 as turning point."}, {"id": "idea-01", "ep": "—", "title": "Is PH Premium Connectivity Globe or Smart?", "partner": "—", "window": "TBD", "status": "Conceptualized", "logline": "Geordani's built-in LTE modem connects to a cellular network, but Tesla Philippines won't officially say which one. This episode investigates, starting with a check at the delivery itself: which network does the car's eSIM actually show on the touchscreen? One question, one answer, and a look at what it means for owners in areas with uneven coverage.", "notes": "Check at delivery — network info visible on touchscreen."}, {"id": "idea-02", "ep": "—", "title": "Starlink Mini on a Road Trip", "partner": "Starlink TBC", "window": "TBD", "status": "Conceptualized", "logline": "The Starlink Mini is compact enough to bring on a road trip, but does that make it practical for a Tesla journey through the Philippines? This episode tests the Mini on actual highway conditions, measuring speed, reliability, and whether it meaningfully improves on Geordani's built-in LTE in dead zones. A satellite internet experiment, taken to the road.", "notes": "Tied to Bicol Test production logistics."}]};
+
+const SHARED = {
+  'bpt-09': {
+    primary: 'bpt',
+    shared:  ['solar'],
+    labels:  { bpt: '09', solar: '01' },
+    pos:     { solar: 0 }
+  }
+};
+const SWATCH_COLORS = ["#F5A623", "#4CAF50", "#00BCD4", "#E879A0", "#C084FC", "#64748B", "#EF4444", "#3B82F6", "#A855F7", "#F59E0B", "#10B981", "#EC4899", "#6366F1", "#84CC16", "#F97316", "#0EA5E9"];
+const CAL = ['Jul 2026','Aug 2026','Sep 2026','Oct 2026','Nov 2026','Dec 2026',
+             'Jan 2027','Feb 2027','Mar 2027','Apr 2027','May 2027','Jun 2027','Jul 2027'];
+
+let S = {
+  data: deepClone(INIT),
+  seriesCfg: deepClone(SC),
+  tab: 'bpt',
+  view: 'list',
+  timer: null,
+  modal: { type: null, seriesKey: null, epId: null, selectedColor: null },
+};
+
+function deepClone(x) { return JSON.parse(JSON.stringify(x)); }
+
+// SAVE
+function save() {
+  if (IS_VIEWER) return;
+  const si = document.getElementById('si');
+  si.textContent = 'Saving…'; si.className = 'si saving';
+  clearTimeout(S.timer);
+  S.timer = setTimeout(async () => {
+    const payload = { data: S.data, seriesCfg: S.seriesCfg };
+    try {
+      if (DBREF) {
+        await DBREF.set(payload);
+      } else {
+        localStorage.setItem('gio-tracker-local', JSON.stringify(payload));
+      }
+      si.textContent = DBREF ? '✓ Saved' : '✓ Saved (local)';
+      si.className = 'si saved';
+      setTimeout(() => { si.textContent = 'Auto-save on'; si.className = 'si'; }, 1600);
+    } catch(e) {
+      si.textContent = 'Save failed'; si.className = 'si saving';
+    }
+  }, 500);
+}
+
+// UTILS
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function genId() { return 'ep-' + Date.now() + '-' + Math.floor(Math.random()*9999); }
+function allEps() { return Object.values(S.data).flat(); }
+
+// RENDER ALL
+function renderAll() {
+  renderHeader();
+  if (S.view === 'list') {
+    renderTabs();
+    renderSeriesLabel();
+    renderList();
+    document.getElementById('listWrap').style.display = '';
+    document.getElementById('calWrap').style.display = 'none';
+  } else {
+    renderCalendar();
+    document.getElementById('listWrap').style.display = 'none';
+    document.getElementById('calWrap').style.display = '';
+  }
+}
+
+function renderHeader() {
+  const all = allEps();
+  const keys = Object.keys(S.seriesCfg);
+  document.getElementById('sub').textContent = all.length + ' pieces across ' + keys.length + ' series';
+  const counts = {};
+  ST.forEach(s => { counts[s] = all.filter(e => e.status === s).length; });
+  document.getElementById('stats').innerHTML = ST.filter(s => counts[s] > 0).map(s =>
+    `<div style="font-size:10px;font-weight:300;letter-spacing:0.03em;color:${STC[s]}">${counts[s]} ${s}</div>`
+  ).join('');
+}
+
+function renderTabs() {
+  document.getElementById('tbar').innerHTML = Object.entries(S.seriesCfg).map(([k, cfg]) => {
+    const on = k === S.tab;
+    const cnt = getSeriesCount(k);
+    return `<button class="tab${on?' on':''}" style="--sc:${cfg.color}" onclick="switchTab('${k}')"
+      draggable="true"
+      ondragstart="dragStart('${k}',event)"
+      ondragover="dragOver(event,'${k}')"
+      ondrop="dropTab('${k}')"
+      ondragend="dragEnd(event)"
+      ondragleave="dragLeave(event)">
+      <span class="tdot"></span>${cfg.short}
+      <span class="tcnt">${cnt}</span>
+    </button>`;
+  }).join('') + `<button class="tab-add-series" onclick="openAddSeries()">＋ SERIES</button>`;
+}
+
+function renderSeriesLabel() {
+  const cfg = S.seriesCfg[S.tab];
+  if (!cfg) return;
+  document.getElementById('slbl').innerHTML = `
+    <div class="slbl-l">
+      <div class="sbar" style="background:${cfg.color}"></div>
+      <div class="sname" style="color:${cfg.color}">${esc(cfg.label)}</div>
+    </div>
+    <div class="sacts">
+      <button class="sact" onclick="openRenameSeries('${S.tab}')">Rename</button>
+      <button class="sact del" onclick="deleteSeries('${S.tab}')">Delete Series</button>
+    </div>`;
+  const ab = document.getElementById('addbtn');
+  if (ab) ab.style.setProperty('--sc', cfg.color);
+}
+
+function renderList() {
+  const cfg = S.seriesCfg[S.tab];
+  const eps = getSeriesEps(S.tab);
+  if (!eps.length) {
+    document.getElementById('elist').innerHTML = `<div style="padding:40px 0;text-align:center;color:var(--tm);font-size:13px">No episodes yet. Add one below.</div>`;
+    return;
+  }
+  document.getElementById('elist').innerHTML = eps.map(ep => renderCard(ep, S.tab, cfg)).join('');
+}
+
+function renderCard(ep, key, cfg) {
+  const sc = STC[ep.status] || '#64748B';
+  const isNone = ep.ep === '—';
+  const isShared   = !!ep._sharedFrom;
+  const primaryKey = ep._sharedFrom || key;
+  const displayEp  = ep._displayEp || ep.ep;
+  const sharedTag  = isShared ? '<span class="shared-tag">&#8644; BPT EP&nbsp;09</span>' : '';
+  const deleteBtn  = isShared ? '' : `<button class="cact del" onclick="deleteEp('${primaryKey}','${ep.id}')">&#10005; Delete</button>`;
+  const dragAttrs  = isShared ? '' :
+    `draggable="true" ondragstart="epDragStart('${key}','${ep.id}',event)" ondragover="epDragOver(event,'${key}','${ep.id}')" ondrop="epDrop('${key}','${ep.id}')" ondragend="epDragEnd(event)" ondragleave="epDragLeave(event)"`;
+  return `<div class="card" id="card-${ep.id}" style="--sc:${cfg.color}" ${dragAttrs}>
+    <div class="ctop">
+      <div class="ebadge${isNone?' none':''}">${isNone ? '&mdash;' : 'EP&nbsp;' + esc(displayEp)}</div>
+      <div class="cbody">
+        <div class="ctitle">${esc(ep.title)}${sharedTag}</div>
+        <div class="coverview">${esc(ep.logline || '')}</div>
+        <div class="cmeta">
+          ${ep.partner && ep.partner !== '—' ? `<span class="mpartner">&#x1F91D; ${esc(ep.partner)}</span>` : ''}
+          <span class="mwindow${ep.window==='TBD'?' tbd':''}">&#x1F4C5; ${esc(ep.window || 'TBD')}</span>
+        </div>
+        ${ep.notes ? `<div class="cnotes">${esc(ep.notes)}</div>` : ''}
+        <div class="cfooter">
+          <button class="spill" style="color:${sc};border-color:${sc}40;background:${sc}18"
+            onclick="cycleStatus('${key}','${ep.id}')" title="Click to cycle status">${esc(ep.status)}</button>
+          <div class="cacts">
+            <button class="cact" onclick="openEditEp('${primaryKey}','${ep.id}')">&#9998; Edit</button>
+            ${deleteBtn}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// CALENDAR
+function renderCalendar() {
+  const all = allEps();
+  const byMonth = {};
+  CAL.forEach(m => { byMonth[m] = []; });
+  const tbd = [];
+
+  all.forEach(ep => {
+    const w = ep.window || 'TBD';
+    if (byMonth[w] !== undefined) {
+      // find series key
+      const key = Object.keys(S.data).find(k => S.data[k].some(e => e.id === ep.id));
+      byMonth[w].push({ ep, key });
+    } else {
+      const key = Object.keys(S.data).find(k => S.data[k].some(e => e.id === ep.id));
+      tbd.push({ ep, key });
+    }
+  });
+
+  document.getElementById('calgrid').innerHTML = CAL.map(m => {
+    const items = byMonth[m];
+    return `<div class="mcard">
+      <div class="mhdr">${m}<span class="mcnt">${items.length || ''}</span></div>
+      <div class="meps">${items.length
+        ? items.map(({ep, key}) => {
+            const cfg = S.seriesCfg[key] || {};
+            const t = ep.title.length > 22 ? ep.title.slice(0,22)+'...' : ep.title;
+            const p = ep.partner && ep.partner !== '—' ? ep.partner : '';
+            return `<div class="echip" style="border-left-color:${cfg.color||'#64748B'}"
+              onclick="jumpTo('${key}','${ep.id}')">
+              <span class="chipl" style="color:${cfg.color||'#64748B'}">${esc(cfg.short||'')}</span>
+              <div class="chipb">
+                <div class="chipt">${esc(t)}</div>
+                ${p ? `<div class="chipp">${esc(p)}</div>` : ''}
+              </div>
+            </div>`;
+          }).join('')
+        : '<div class="mempty">—</div>'
+      }</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tbdchips').innerHTML = tbd.map(({ep, key}) => {
+    const cfg = S.seriesCfg[key] || {};
+    const t = ep.title.length > 28 ? ep.title.slice(0,28)+'...' : ep.title;
+    return `<div class="tbdchip" onclick="jumpTo('${key}','${ep.id}')">
+      <div class="tbddot" style="background:${cfg.color||'#64748B'}"></div>
+      <span class="tbdt">${esc(t)}</span>
+    </div>`;
+  }).join('') || '<span style="font-size:11px;color:var(--tm)">All episodes scheduled!</span>';
+}
+
+
+// SHARED EPISODE HELPERS
+function findEpInData(id) {
+  for (const k of Object.keys(S.data)) {
+    const ep = (S.data[k] || []).find(e => e.id === id);
+    if (ep) return { ep, key: k };
+  }
+  return null;
+}
+function getSeriesEps(key) {
+  const eps = (S.data[key] || []).map(ep => ({ ...ep }));
+  Object.entries(SHARED).forEach(([epId, cfg]) => {
+    if (!cfg.shared.includes(key)) return;
+    const found = findEpInData(epId);
+    if (!found) return;
+    const pos = cfg.pos[key] ?? 0;
+    eps.splice(pos, 0, { ...found.ep, _sharedFrom: found.key, _displayEp: cfg.labels[key] });
+  });
+  return eps;
+}
+function getSeriesCount(key) {
+  const base = (S.data[key] || []).length;
+  const shared = Object.values(SHARED).filter(c => c.shared.includes(key)).length;
+  return base + shared;
+}
+// DRAG TO REORDER EPISODES
+let _dragEpKey = null, _dragEpId = null;
+
+function epDragStart(key, id, e) {
+  _dragEpKey = key; _dragEpId = id;
+  e.currentTarget.classList.add('ep-dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function epDragOver(e, key, id) {
+  if (_dragEpKey !== key) return;
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  if (id !== _dragEpId) e.currentTarget.classList.add('ep-drag-over');
+}
+function epDragLeave(e) { e.currentTarget.classList.remove('ep-drag-over'); }
+function epDragEnd(e) {
+  e.currentTarget.classList.remove('ep-dragging');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('ep-drag-over','ep-dragging'));
+  _dragEpKey = null; _dragEpId = null;
+}
+function epDrop(targetKey, targetId) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('ep-drag-over','ep-dragging'));
+  if (!_dragEpKey || !_dragEpId || _dragEpId === targetId || _dragEpKey !== targetKey || SHARED[targetId]) {
+    _dragEpKey = null; _dragEpId = null; return;
+  }
+  const eps = S.data[targetKey];
+  const fromIdx = eps.findIndex(e => e.id === _dragEpId);
+  const toIdx   = eps.findIndex(e => e.id === targetId);
+  const [moved] = eps.splice(fromIdx, 1);
+  eps.splice(toIdx, 0, moved);
+  renumberEps(targetKey);
+  _dragEpKey = null; _dragEpId = null;
+  save();
+  renderAll();
+}
+function renumberEps(key) {
+  let n = 1;
+  S.data[key] = S.data[key].map(ep => {
+    if (ep.ep === '—' || SHARED[ep.id]) return ep;
+    const match = ep.ep.match(/^(\d+)(.*)/);
+    const suffix = match ? match[2] : '';
+    return { ...ep, ep: String(n++).padStart(2, '0') + suffix };
+  });
+}
+
+// DRAG TO REORDER TABS
+let _dragKey = null;
+function dragStart(key, e) {
+  _dragKey = key;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e, key) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (key !== _dragKey) e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('drag-over','dragging'));
+  _dragKey = null;
+}
+function dropTab(targetKey) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('drag-over','dragging'));
+  if (!_dragKey || _dragKey === targetKey) { _dragKey = null; return; }
+  const keys = Object.keys(S.seriesCfg);
+  const from = keys.indexOf(_dragKey);
+  const to   = keys.indexOf(targetKey);
+  keys.splice(from, 1);
+  keys.splice(to, 0, _dragKey);
+  const newCfg = {}, newData = {};
+  keys.forEach(k => { newCfg[k] = S.seriesCfg[k]; newData[k] = S.data[k] || []; });
+  S.seriesCfg = newCfg;
+  S.data = newData;
+  _dragKey = null;
+  save();
+  renderAll();
+}
+
+// ACTIONS
+function switchTab(key) {
+  S.tab = key;
+  renderTabs();
+  renderSeriesLabel();
+  renderList();
+  window.scrollTo(0,0);
+}
+
+function setView(v) {
+  S.view = v;
+  document.getElementById('vbList').className = 'tvb' + (v==='list'?' on':'');
+  document.getElementById('vbCal').className  = 'tvb' + (v==='calendar'?' on':'');
+  renderAll();
+}
+
+function jumpTo(key, epId) {
+  S.view = 'list';
+  S.tab = key;
+  renderAll();
+  setTimeout(() => {
+    const el = document.getElementById('card-' + epId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function cycleStatus(key, id) {
+  const ep = (S.data[key] || []).find(e => e.id === id);
+  if (!ep) return;
+  ep.status = ST[(ST.indexOf(ep.status) + 1) % ST.length];
+  save();
+  renderHeader();
+  // Update pill in place
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    const pill = card.querySelector('.spill');
+    const sc = STC[ep.status];
+    pill.textContent = ep.status;
+    pill.style.color = sc;
+    pill.style.borderColor = sc + '40';
+    pill.style.background = sc + '18';
+  }
+}
+
+function deleteEp(key, id) {
+  const ep = (S.data[key] || []).find(e => e.id === id);
+  if (!ep) return;
+  openModal('Delete Episode',
+    `<p style="color:var(--ts);font-size:13px;line-height:1.6">Delete <strong style="color:var(--tp)">"${esc(ep.title)}"</strong>?<br>This cannot be undone.</p>`,
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-d" onclick="confirmDeleteEp('${key}','${id}')">Delete</button>`
+  );
+}
+function confirmDeleteEp(key, id) {
+  S.data[key] = (S.data[key] || []).filter(e => e.id !== id);
+  closeModal(); save(); renderAll();
+}
+
+function deleteSeries(key) {
+  const cfg = S.seriesCfg[key];
+  const cnt = (S.data[key] || []).length;
+  openModal('Delete Series',
+    `<p style="color:var(--ts);font-size:13px;line-height:1.6">Delete series <strong style="color:var(--tp)">"${esc(cfg.label)}"</strong>${cnt ? ` and its <strong style="color:#F44366">${cnt} episode(s)</strong>` : ''}?<br>This cannot be undone.</p>`,
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-d" onclick="confirmDeleteSeries('${key}')">Delete Series</button>`
+  );
+}
+function confirmDeleteSeries(key) {
+  delete S.seriesCfg[key];
+  delete S.data[key];
+  S.tab = Object.keys(S.seriesCfg)[0] || '';
+  closeModal(); save(); renderAll();
+}
+
+// MODAL SYSTEM
+function openModal(title, bodyHtml, footerHtml) {
+  document.getElementById('mtitle').textContent = title;
+  document.getElementById('mbody').innerHTML = bodyHtml;
+  document.getElementById('mftr').innerHTML = footerHtml;
+  document.getElementById('modal').className = 'moverlay';
+}
+function closeModal() { document.getElementById('modal').className = 'moverlay hide'; }
+function overlayClick(e) { if (e.target === e.currentTarget) closeModal(); }
+
+// EDIT / ADD EPISODE
+function epForm(ep) {
+  const statusOpts = ST.map(s => `<option value="${s}"${ep && ep.status===s?' selected':''}>${s}</option>`).join('');
+  return `
+    <div class="fg-row">
+      <div class="fg"><label class="flbl">Episode #</label>
+        <input class="finp" id="fEp" value="${esc(ep ? ep.ep : '')}" placeholder="01 or —"></div>
+      <div class="fg"><label class="flbl">Window</label>
+        <input class="finp" id="fWin" value="${esc(ep ? ep.window : 'TBD')}" placeholder="Jul 2026 or TBD"></div>
+    </div>
+    <div class="fg"><label class="flbl">Title</label>
+      <input class="finp" id="fTitle" value="${esc(ep ? ep.title : '')}" placeholder="Episode title"></div>
+    <div class="fg"><label class="flbl">Partner</label>
+      <input class="finp" id="fPartner" value="${esc(ep ? ep.partner : '—')}" placeholder="Brand name or —"></div>
+    <div class="fg"><label class="flbl">Status</label>
+      <select class="fsel" id="fStatus">${statusOpts}</select></div>
+    <div class="fg"><label class="flbl">Overview</label>
+      <textarea class="fta" id="fLogline" rows="4" placeholder="3-sentence overview...">${esc(ep ? ep.logline : '')}</textarea></div>
+    <div class="fg"><label class="flbl">Notes</label>
+      <textarea class="fta" id="fNotes" rows="3" placeholder="Production notes...">${esc(ep ? ep.notes : '')}</textarea></div>`;
+}
+
+function openEditEp(key, id) {
+  const ep = (S.data[key] || []).find(e => e.id === id);
+  if (!ep) return;
+  S.modal = { type: 'edit', seriesKey: key, epId: id };
+  openModal('Edit Episode', epForm(ep),
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-p" onclick="saveEpModal()">Save</button>`);
+}
+
+function openAddEp() {
+  S.modal = { type: 'add', seriesKey: S.tab, epId: null };
+  openModal('Add Episode', epForm(null),
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-p" onclick="saveEpModal()">Add</button>`);
+}
+
+function saveEpModal() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { document.getElementById('fTitle').focus(); return; }
+  const ep = {
+    id: S.modal.epId || genId(),
+    ep: document.getElementById('fEp').value.trim() || '—',
+    title,
+    partner: document.getElementById('fPartner').value.trim() || '—',
+    window: document.getElementById('fWin').value.trim() || 'TBD',
+    status: document.getElementById('fStatus').value,
+    logline: document.getElementById('fLogline').value.trim(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+  const key = S.modal.seriesKey;
+  if (S.modal.type === 'edit') {
+    const idx = S.data[key].findIndex(e => e.id === ep.id);
+    if (idx !== -1) S.data[key][idx] = ep;
+  } else {
+    if (!S.data[key]) S.data[key] = [];
+    S.data[key].push(ep);
+  }
+  closeModal();
+  save();
+  renderAll();
+}
+
+// ADD / RENAME SERIES
+function swatchHtml(sel) {
+  return SWATCH_COLORS.map(c =>
+    `<div class="sw${c===sel?' on':''}" style="background:${c}" onclick="pickSwatch('${c}')" title="${c}"></div>`
+  ).join('');
+}
+
+function pickSwatch(c) {
+  S.modal.selectedColor = c;
+  document.querySelectorAll('.sw').forEach(el => {
+    el.className = 'sw' + (el.style.background === c || el.style.backgroundColor === c ? ' on' : '');
+  });
+}
+
+function openAddSeries() {
+  S.modal = { type: 'addSeries', selectedColor: SWATCH_COLORS[0] };
+  openModal('Add Series',
+    `<div class="fg"><label class="flbl">Series Name</label>
+       <input class="finp" id="sName" placeholder="e.g. Building Papa's BYD"></div>
+     <div class="fg"><label class="flbl">Short Label (for tab)</label>
+       <input class="finp" id="sShort" placeholder="e.g. BPB" maxlength="14"></div>
+     <div class="fg"><label class="flbl">Color</label>
+       <div class="swatches" id="swatches">${swatchHtml(S.modal.selectedColor)}</div></div>`,
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-p" onclick="saveAddSeries()">Add Series</button>`);
+}
+
+function saveAddSeries() {
+  const name = document.getElementById('sName').value.trim();
+  const sh = document.getElementById('sShort').value.trim().toUpperCase();
+  if (!name || !sh) return;
+  const color = S.modal.selectedColor || SWATCH_COLORS[0];
+  const key = name.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20) + '_' + Date.now();
+  S.seriesCfg[key] = { label: name, color, short: sh };
+  S.data[key] = [];
+  S.tab = key;
+  closeModal();
+  save();
+  renderAll();
+}
+
+function openRenameSeries(key) {
+  const cfg = S.seriesCfg[key];
+  S.modal = { type: 'renameSeries', seriesKey: key, selectedColor: cfg.color };
+  openModal('Rename / Recolor Series',
+    `<div class="fg"><label class="flbl">Series Name</label>
+       <input class="finp" id="sName" value="${esc(cfg.label)}"></div>
+     <div class="fg"><label class="flbl">Short Label</label>
+       <input class="finp" id="sShort" value="${esc(cfg.short)}" maxlength="14"></div>
+     <div class="fg"><label class="flbl">Color</label>
+       <div class="swatches" id="swatches">${swatchHtml(cfg.color)}</div></div>`,
+    `<button class="btn btn-c" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-p" onclick="saveRenameSeries()">Save</button>`);
+}
+
+function saveRenameSeries() {
+  const key = S.modal.seriesKey;
+  const name = document.getElementById('sName').value.trim();
+  const sh = document.getElementById('sShort').value.trim().toUpperCase();
+  if (!name || !sh) return;
+  S.seriesCfg[key].label = name;
+  S.seriesCfg[key].short = sh;
+  S.seriesCfg[key].color = S.modal.selectedColor || S.seriesCfg[key].color;
+  closeModal();
+  save();
+  renderAll();
+}
+
+// INIT
+function applySaved(saved) {
+  if (!saved) return;
+  if (saved.data) {
+    Object.keys(INIT).forEach(k => { if (saved.data[k]) S.data[k] = saved.data[k]; });
+    Object.keys(saved.data).forEach(k => { if (!INIT[k]) S.data[k] = saved.data[k]; });
+  }
+  if (saved.seriesCfg) {
+    Object.keys(saved.seriesCfg).forEach(k => { S.seriesCfg[k] = saved.seriesCfg[k]; });
+  }
+  if (!S.seriesCfg[S.tab]) S.tab = Object.keys(S.seriesCfg)[0] || '';
+}
+
+async function init() {
+  // Try to connect Firebase; fall back gracefully if unavailable
+  try { await initFirebase(); } catch(e) { console.warn('Firebase unavailable, using local storage.'); }
+
+  if (IS_VIEWER) {
+    document.body.classList.add('viewer');
+    document.getElementById('vbanner').style.display = '';
+    if (DBREF) {
+      // Real-time listener — viewers see live updates
+      DBREF.on('value', snap => { applySaved(snap.val()); renderAll(); });
+    } else {
+      renderAll(); // No Firebase — just render defaults
+    }
+  } else {
+    if (DBREF) {
+      // Editor: load once from Firebase
+      DBREF.once('value', snap => {
+        const saved = snap.val();
+        if (saved) { applySaved(saved); }
+        else { DBREF.set({ data: S.data, seriesCfg: S.seriesCfg }); }
+        renderAll();
+      });
+    } else {
+      // Fallback: localStorage
+      try {
+        const raw = localStorage.getItem('gio-tracker-local');
+        if (raw) applySaved(JSON.parse(raw));
+      } catch(e) {}
+      renderAll();
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>
